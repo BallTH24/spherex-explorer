@@ -52,7 +52,7 @@ export function useEpochAnimator(args: AnimatorArgs): {
         ? phase < 0.5 ? 0 : 1
         : smooth(0.42, 0.52, phase) - smooth(0.92, 1.0, phase);
     } else {
-      if (mode !== 'blink') blinkPhase.current = 0; // blink always starts on epoch 1
+      blinkPhase.current = 0; // blink always starts on epoch 1
       const target = mode === 'difference' ? 1 : mode === 'compare' ? 0 : epoch === 2 ? 1 : 0;
       s.mix += (target - s.mix) * ease;
     }
