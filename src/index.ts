@@ -1,4 +1,4 @@
-export { SpaceExplorer3D } from './components/SpaceExplorer3D';
+export { SpaceExplorer3D, SpectrumHudOverlay } from './components/SpaceExplorer3D';
 export { generateDemoObjects, generateDemoObjectsForRange } from './utils/catalog';
 export { skyToScene, spherexBundleToSpaceObject, getBenchmarkSpaceObjects } from './utils/spherexAdapter';
 export { addMonths, formatDate, validateRange } from './utils/dates';

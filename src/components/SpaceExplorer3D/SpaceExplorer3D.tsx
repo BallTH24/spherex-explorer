@@ -17,6 +17,7 @@ import { CompareDivider, SplitDriver, type SplitState } from './CompareSlider';
 import { ObjectLayer } from './CelestialObject';
 import { EpochControls, tabFor, type ModeTab } from './EpochController';
 import { InfoPanel } from './InfoPanel';
+import { SpectrumHudOverlay } from './SpectrumHudOverlay';
 import { OverlayTracker } from './OverlayTracker';
 import { StarField } from './StarField';
 import { TimeRangeBar } from './TimeRangeBar';
@@ -477,7 +478,9 @@ export const SpaceExplorer3D = forwardRef<SpaceExplorer3DHandle, SpaceExplorer3D
             {showInfoPanel && selected &&
               (renderInfoPanel
                 ? renderInfoPanel({ object: selected, change, mode, epoch, close: () => setSelectedId(null) })
-                : <InfoPanel object={selected} change={change} mode={mode} epoch={epoch} close={() => setSelectedId(null)} />)}
+                : (selected.meta?.spectrum_102_bands
+                    ? <SpectrumHudOverlay object={selected} close={() => setSelectedId(null)} />
+                    : <InfoPanel object={selected} change={change} mode={mode} epoch={epoch} close={() => setSelectedId(null)} />))}
           </>
         )}
       </div>

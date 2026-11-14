@@ -71,6 +71,10 @@ export function spherexBundleToSpaceObject(bundle: SpherexTargetBundle): SpaceOb
       },
     },
     meta: {
+      target_id: bundle.target_id,
+      ra: ep2.ra,
+      dec: ep2.dec,
+      target_category: bundle.target_category,
       kinematics: bundle.kinematics,
       ai_analysis: bundle.ai_analysis,
       catalog_crossmatch: bundle.catalog_crossmatch,
