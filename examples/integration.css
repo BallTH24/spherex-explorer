@@ -1,0 +1,13 @@
+/* Host-site styles. They use a `host-` prefix and deliberately collide with generic names to prove isolation. */
+.host-app { display: grid; grid-template-rows: auto 1fr; height: 100%; font-family: Georgia, serif; background: #f4f1ea; color: #222; }
+.host-nav { display: flex; gap: 20px; align-items: baseline; padding: 12px 20px; border-bottom: 1px solid #ccc; }
+.host-nav h1 { margin: 0; font-size: 18px; }
+.host-nav a { color: #035; }
+.host-main { display: grid; grid-template-columns: 280px 1fr; min-height: 0; }
+.host-side { padding: 16px; overflow: auto; border-right: 1px solid #ccc; font-size: 14px; }
+.host-side button { display: block; width: 100%; margin: 4px 0; padding: 8px; font: inherit; cursor: pointer; }
+.host-side button[aria-pressed="true"] { background: #035; color: #fff; }
+.host-side pre { white-space: pre-wrap; font-size: 11px; background: #fff; padding: 8px; max-height: 220px; overflow: auto; }
+.host-stage { min-height: 0; padding: 12px; }
+.host-stage .host-frame { height: 100%; border-radius: 6px; overflow: hidden; }
+@media (max-width: 760px) { .host-main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .host-side { border-right: 0; border-bottom: 1px solid #ccc; max-height: 38vh; } }
