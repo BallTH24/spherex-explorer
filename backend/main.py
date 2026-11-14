@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,6 +30,7 @@ ALIAS_MAP: Dict[str, str] = {
     "wise_0855_0714": "WISE_0855_0714",
     "barnards_star": "BARNARDS_STAR",
     "rw_aurigae": "RW_AURIGAE",
+    "planet_x": "PLANET_X_CANDIDATE",
     "planet_x_candidate": "PLANET_X_CANDIDATE",
 }
 
@@ -69,8 +71,8 @@ class TargetSummaryItem(BaseModel):
 
 
 class LiveAnalyzeRequest(BaseModel):
-    ra: float = Field(..., description="Right Ascension (ICRS Degrees)")
-    dec: float = Field(..., description="Declination (ICRS Degrees)")
+    ra: float = Field(..., ge=0.0, le=360.0, description="Right Ascension (ICRS Degrees)")
+    dec: float = Field(..., ge=-90.0, le=90.0, description="Declination (ICRS Degrees)")
     base_target_id: Optional[str] = Field(
         default="WISE_0855_0714",
         description="รหัสชุดข้อมูล FITS ต้นทางที่ต้องการสกัดค่า ณ พิกัด (RA, Dec)",
@@ -85,6 +87,7 @@ class LiveAnalyzeRequest(BaseModel):
 def health_check():
     return {
         "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "loaded_targets": list(TARGET_CACHE.keys()),
         "contracts_dir": str(CONTRACTS_DIR),
     }

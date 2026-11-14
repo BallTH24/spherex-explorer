@@ -102,3 +102,8 @@ export function getBenchmarkSpaceObjects(): SpaceObject[] {
 
   return rawList.map(spherexBundleToSpaceObject);
 }
+
+export const raToCartesian = skyToScene;
+export const getSpherexTargetObjects = getBenchmarkSpaceObjects;
+
+
