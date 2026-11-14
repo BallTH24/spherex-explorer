@@ -14,6 +14,7 @@ from backend.astronomy import (
     query_gaia_and_wise_catalogs,
     compute_kinematics_and_variability,
     classify_target_category,
+    fetch_real_nasa_fits_for_target,
 )
 from backend.ml import (
     WAVELENGTHS_102,
@@ -34,8 +35,8 @@ BENCHMARK_SPECS: Dict[str, Dict[str, Any]] = {
     "WISE_0855_0714": {
         "filename": "sample_wise0855.json",
         "title": "WISE J085510.83-071442.5 (Y-Type Brown Dwarf)",
-        "crval1_ra": 133.7800,
-        "crval2_dec": -7.2400,
+        "crval1_ra": 133.7951,
+        "crval2_dec": -7.2451,
         "ep1_xy": (28.0, 30.0),
         "ep2_xy": (33.0, 32.0),
         "amp_ep1": 92.0,
@@ -283,10 +284,13 @@ def run_target_pipeline(
     return bundle
 
 
-def generate_all_benchmarks(use_live_vizier: bool = False) -> Dict[str, SpherexTargetBundle]:
+def generate_all_benchmarks(
+    use_real_nasa: bool = True,
+    use_live_vizier: bool = True,
+) -> Dict[str, SpherexTargetBundle]:
     """
-    เทรนโมเดล AI, สร้างไฟล์ FITS และส่งออกไฟล์ JSON ทั้ง 4 เคส
-    ไปยัง contracts/ และ frontend/public/data/ พร้อมกัน
+    เทรนโมเดล AI, ดึงไฟล์ FITS อินฟราเรดจริงจาก NASA SkyView (พร้อม Auto-Fallback)
+    และส่งออกไฟล์ JSON ทั้ง 4 เคสไปยัง contracts/ และ frontend/public/data/
     """
     ensure_models_trained()
     CONTRACTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -295,15 +299,35 @@ def generate_all_benchmarks(use_live_vizier: bool = False) -> Dict[str, SpherexT
     results: Dict[str, SpherexTargetBundle] = {}
 
     for target_id, spec in BENCHMARK_SPECS.items():
-        paths = generate_target_fits_files(target_id, spec)
+        ep1_xy = spec["ep1_xy"]
+        ep2_xy = spec["ep2_xy"]
+
+        # ดึงไฟล์ FITS จริงจาก NASA สำหรับเป้าหมายที่มีอยู่ในฐานข้อมูลจริง
+        if use_real_nasa and target_id in ("WISE_0855_0714", "BARNARDS_STAR", "RW_AURIGAE"):
+            try:
+                real_res = fetch_real_nasa_fits_for_target(target_id, spec, FITS_DIR)
+                paths = {
+                    "ep1_path": real_res["ep1_path"],
+                    "ep2_path": real_res["ep2_path"],
+                    "cube_path": real_res["cube_path"],
+                }
+                ep1_xy = real_res["ep1_xy"]
+                ep2_xy = real_res["ep2_xy"]
+            except Exception as err:
+                print(f"[WARN] ดึง FITS จริงของ {target_id} ไม่สำเร็จ ({err}) -> สลับใช้ FITS จำลองอัตโนมัติ")
+                paths = generate_target_fits_files(target_id, spec)
+        else:
+            # สำหรับ PLANET_X_CANDIDATE (วัตถุสมมติที่รอการค้นพบ) หรือกรณีออฟไลน์
+            paths = generate_target_fits_files(target_id, spec)
+
         bundle = run_target_pipeline(
             target_id=target_id,
             title=spec["title"],
             fits_ep1_path=paths["ep1_path"],
             fits_ep2_path=paths["ep2_path"],
             fits_cube_path=paths["cube_path"],
-            ep1_xy=spec["ep1_xy"],
-            ep2_xy=spec["ep2_xy"],
+            ep1_xy=ep1_xy,
+            ep2_xy=ep2_xy,
             use_live_vizier=use_live_vizier,
             fallback_optical_invisible=spec["optical_invisible"],
             forced_category=spec["forced_category"],
@@ -312,16 +336,14 @@ def generate_all_benchmarks(use_live_vizier: bool = False) -> Dict[str, SpherexT
         json_str = bundle.model_dump_json(indent=2)
         fname = spec["filename"]
 
-        # บันทึกลงทั้ง contracts/ และ frontend/public/data/
         (CONTRACTS_DIR / fname).write_text(json_str, encoding="utf-8")
         (FRONTEND_DATA_DIR / fname).write_text(json_str, encoding="utf-8")
 
         results[target_id] = bundle
         print(
             f"[OK] {target_id} -> {fname} | "
-            f"Category: {bundle.target_category} | "
+            f"PM: {bundle.kinematics.proper_motion_arcsec_yr} \"/yr | "
             f"Class: {bundle.ai_analysis.predicted_class} | "
-            f"Temp: {bundle.ai_analysis.estimated_temp_k} K | "
             f"Anomaly: {bundle.ai_analysis.anomaly_score}"
         )
 
@@ -329,4 +351,10 @@ def generate_all_benchmarks(use_live_vizier: bool = False) -> Dict[str, SpherexT
 
 
 if __name__ == "__main__":
-    generate_all_benchmarks(use_live_vizier=False)
+    import sys
+    # ถ้ารัน `python3 -m backend.pipeline --offline` จะข้ามการต่อเน็ตดึง NASA
+    offline_mode = "--offline" in sys.argv
+    generate_all_benchmarks(
+        use_real_nasa=not offline_mode,
+        use_live_vizier=not offline_mode,
+    )

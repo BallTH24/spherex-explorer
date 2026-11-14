@@ -37,7 +37,7 @@ ALIAS_MAP: Dict[str, str] = {
 async def lifespan(app: FastAPI):
     """เตรียมความพร้อมโมเดล AI และสร้าง JSON Benchmarks ทั้ง 4 เคสทันทีที่เปิดเซิร์ฟเวอร์"""
     ensure_models_trained()
-    bundles = generate_all_benchmarks(use_live_vizier=False)
+    bundles = generate_all_benchmarks(use_real_nasa=False, use_live_vizier=False)
     TARGET_CACHE.update(bundles)
     yield
 
