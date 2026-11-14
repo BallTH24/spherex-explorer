@@ -4,6 +4,13 @@ import numpy as np
 WAVELENGTHS_102 = np.round(np.linspace(0.75, 5.0, 102), 4)
 
 
+def _planck_continuum_shape(wl: np.ndarray, temp_k: float) -> np.ndarray:
+    """คำนวณรูปร่างเส้นความสว่างต่อเนื่องตามกฎการแผ่รังสีของพลังค์ (Planck's Law) สำหรับ SPHEREx"""
+    hc_k = 14387.77
+    planck = (wl**-3.0) / np.expm1(np.clip(hc_k / (wl * temp_k), 1e-2, 50.0))
+    return planck / (planck + 0.05)
+
+
 def generate_synthetic_dipole_samples(n_samples: int = 400, rng_seed: int = 42) -> Tuple[np.ndarray, np.ndarray]:
     """
     สร้างชุดข้อมูลจำลองภาพ Cutout ขนาด 16x16:
@@ -103,16 +110,14 @@ def generate_synthetic_spectral_samples(n_samples: int = 500, rng_seed: int = 42
             cls_name = "T/L-Type Brown Dwarf"
         elif cat_type == "m_dwarf":
             temp = rng.uniform(2800.0, 3600.0)
-            planck = (wl**-3.0) / np.expm1(np.clip(14387.77 / (wl * temp), 1e-2, 50.0))
-            cont = 55.0 * (planck / (planck + 0.05))
+            cont = 55.0 * _planck_continuum_shape(wl, temp)
             h2o = 1.0 - rng.uniform(0.08, 0.18) * np.exp(-((wl - 3.05) ** 2) / (2 * 0.08**2))
             ch4 = 1.0 - rng.uniform(0.0, 0.04) * np.exp(-((wl - 3.32) ** 2) / (2 * 0.08**2))
             co = 1.0 - rng.uniform(0.08, 0.22) * np.exp(-((wl - 4.45) ** 2) / (2 * 0.12**2))
             cls_name = "M-Dwarf Star / Red Dwarf"
         else:
             temp = rng.uniform(3400.0, 4000.0)
-            planck = (wl**-3.0) / np.expm1(np.clip(14387.77 / (wl * temp), 1e-2, 50.0))
-            cont = 55.0 * (planck / (planck + 0.05)) + 22.0 * np.exp(-((wl - 4.7) ** 2) / (2 * 1.4**2))
+            cont = 55.0 * _planck_continuum_shape(wl, temp) + 22.0 * np.exp(-((wl - 4.7) ** 2) / (2 * 1.4**2))
             h2o = 1.0 - rng.uniform(0.20, 0.35) * np.exp(-((wl - 3.05) ** 2) / (2 * 0.08**2))
             ch4 = 1.0 - rng.uniform(0.0, 0.06) * np.exp(-((wl - 3.32) ** 2) / (2 * 0.08**2))
             co = 1.0 - rng.uniform(0.40, 0.60) * np.exp(-((wl - 4.45) ** 2) / (2 * 0.12**2))
