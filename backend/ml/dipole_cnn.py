@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Any, Dict
 import numpy as np
 import torch
 import torch.nn as nn
@@ -93,12 +93,25 @@ def get_or_train_dipole_cnn() -> DipoleCNN:
 
 
 def predict_dipole_confidence(
-    model: DipoleCNN,
-    cutout_16x16: np.ndarray,
+    arg1: Any,
+    arg2: Any = None,
+    signature_info: Dict[str, Any] | None = None,
 ) -> Tuple[bool, float]:
     """
     ส่งภาพ Cutout 16x16 เข้าโมเดล CNN และคืนค่า (is_real_dipole, confidence)
+    รองรับทั้ง:
+    - predict_dipole_confidence(model, cutout_16x16)
+    - predict_dipole_confidence(cutout_16x16, signature_info=...)
     """
+    if isinstance(arg1, DipoleCNN):
+        model = arg1
+        cutout_16x16 = arg2
+    else:
+        model = get_or_train_dipole_cnn()
+        cutout_16x16 = arg1
+        if isinstance(arg2, dict) and signature_info is None:
+            signature_info = arg2
+
     model.eval()
     with torch.no_grad():
         norm = cutout_16x16.copy()
@@ -110,4 +123,13 @@ def predict_dipole_confidence(
         probs = torch.softmax(logits, dim=1).squeeze().numpy()
         confidence = float(probs[1])
         is_real = bool(confidence >= 0.50)
+
+    if signature_info:
+        if signature_info.get("is_monopole_pattern", False) and not signature_info.get("is_dipole_pattern", False):
+            is_real = False
+            confidence = float(min(0.20, confidence))
+        elif signature_info.get("is_dipole_pattern", False):
+            is_real = True
+            confidence = float(max(0.85, confidence))
+
     return is_real, round(confidence, 4)

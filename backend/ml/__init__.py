@@ -66,4 +66,5 @@ __all__ = [
     "WAVELENGTHS_102",
     "ensure_models_trained",
     "run_ai_analysis",
+    "predict_dipole_confidence",
 ]
