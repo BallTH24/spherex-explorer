@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.env*.local
+
+# Astronomy Raw Data & Heavy Model Weights (ไม่เอาไฟล์ใหญ่ขึ้น Git)
+*.fits
+*.fits.gz
+*.fit
+backend/data_fits/*
+!backend/data_fits/.gitkeep
+backend/models_weights/*.pt
+backend/models_weights/*.joblib
+!backend/models_weights/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
