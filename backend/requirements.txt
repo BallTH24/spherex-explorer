@@ -4,7 +4,6 @@ astropy>=6.0.0
 reproject>=0.13.0
 photutils>=1.11.0
 astroquery>=0.4.7
-torch>=2.2.0
 scikit-learn>=1.4.0
 joblib>=1.3.0
 fastapi>=0.110.0
