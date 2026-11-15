@@ -76,7 +76,29 @@ export function SpectrumHudOverlay({ object, close }: SpectrumHudOverlayProps) {
     setIsAnalyzing(true);
     const startT = performance.now();
     try {
-      const res = await fetch('http://localhost:8000/api/analyze', {
+      // Resolves target via Vercel service binding, Vite env, or public route /api/analyze
+      const boundBackendUrl =
+        typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.BACKEND_URL
+          ? (globalThis as any).process.env.BACKEND_URL
+          : undefined;
+
+      let analyzeEndpoint = '/api/analyze';
+      if (boundBackendUrl) {
+        try {
+          analyzeEndpoint = new URL('api/analyze', boundBackendUrl.endsWith('/') ? boundBackendUrl : `${boundBackendUrl}/`).toString();
+        } catch {
+          analyzeEndpoint = '/api/analyze';
+        }
+      } else if ((import.meta as any).env?.VITE_BACKEND_URL || (import.meta as any).env?.VITE_API_URL) {
+        const envBase = (import.meta as any).env?.VITE_BACKEND_URL || (import.meta as any).env?.VITE_API_URL;
+        try {
+          analyzeEndpoint = new URL('api/analyze', envBase.endsWith('/') ? envBase : `${envBase}/`).toString();
+        } catch {
+          analyzeEndpoint = '/api/analyze';
+        }
+      }
+
+      const res = await fetch(analyzeEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

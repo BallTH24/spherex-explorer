@@ -1,3 +1,14 @@
+import sys
+from pathlib import Path
+
+# Ensure repository root and backend directory are on sys.path for robust import resolution
+_ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(_ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(_ROOT_DIR))
+_BACKEND_DIR = Path(__file__).resolve().parent
+if str(_BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_DIR))
+
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
@@ -84,6 +95,7 @@ class LiveAnalyzeRequest(BaseModel):
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health_check():
     return {
         "status": "ok",
@@ -94,6 +106,7 @@ def health_check():
 
 
 @app.get("/api/targets", response_model=List[TargetSummaryItem])
+@app.get("/targets", response_model=List[TargetSummaryItem])
 def list_available_targets():
     """คืนค่ารายชื่อเป้าหมายทดสอบทั้งหมดสำหรับใส่ใน Dropdown บนหน้าเว็บ"""
     items: List[TargetSummaryItem] = []
@@ -113,6 +126,7 @@ def list_available_targets():
 
 
 @app.get("/api/targets/{target_key}", response_model=SpherexTargetBundle)
+@app.get("/targets/{target_key}", response_model=SpherexTargetBundle)
 def get_target_bundle(target_key: str):
     """
     ดึงข้อมูล SpherexTargetBundle ตาม target_id (เช่น WISE_0855_0714)
@@ -130,6 +144,7 @@ def get_target_bundle(target_key: str):
 
 
 @app.post("/api/analyze", response_model=SpherexTargetBundle)
+@app.post("/analyze", response_model=SpherexTargetBundle)
 def analyze_custom_coordinates(req: LiveAnalyzeRequest):
     """
     รับพิกัด (RA, Dec) จากการคลิกบนหน้าเว็บหรือ URL Query
